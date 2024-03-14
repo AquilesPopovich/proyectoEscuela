@@ -30,14 +30,35 @@ def mostrarDatos(nombre="", sexo="", calificacion="", ordenamiento=""):
 
     tabla.delete(*tabla.get_children())  # Limpiar tabla antes de mostrar datos
     try:
-        if ordenamiento == "A-Z":
-            cursor = coleccion.find(objetoBuscar).sort("nombre", )
-        elif ordenamiento == "Z-A":
-            cursor = coleccion.find(objetoBuscar).sort("nombre", )
-        elif ordenamiento == "Calif ↑":
-            cursor = coleccion.find(objetoBuscar).sort("calificacion", )
+        if ordenamiento == "aprobados":
+            filtrado = coleccion.find(objetoBuscar)  # Primero filtra según los criterios
+            print("Documentos antes del filtro por calificación:", list(filtrado))  # Imprimir los documentos antes del filtro
+            filtrado = coleccion.find(objetoBuscar)  # Reiniciar el cursor
+            cursor = filter(lambda alumno: int(alumno.get("calificacion", 0)) >= 6, filtrado)  # Filtrar por calificación aprobada
         elif ordenamiento == "Calif ↓":
-            cursor = coleccion.find(objetoBuscar).sort("calificacion", )
+            print('entro aca')
+            alumnos = coleccion.find(objetoBuscar)  # Primero filtra según los criterios
+            array = list(alumnos)
+            print("Documentos antes del filtro por calificación:", list(alumnos))  # Imprimir los documentos antes del filtro
+            # Ordenar el array de alumnos por calificación de manera descendente
+            array = sorted(array, key=lambda alumno: int(alumno.get("calificacion", 0)), reverse=True)
+            # Puedes continuar trabajando con el array ordenado según la calificación
+            for alumno in array:
+                # Aquí puedes hacer lo que necesites con cada alumno, como agregarlos a una tabla
+                print(alumno["_id"], alumno["nombre"], alumno["calificacion"])
+            cursor = array
+        elif ordenamiento == "Calif ↑":
+            print('entro aca')
+            alumnos = coleccion.find(objetoBuscar)  # Primero filtra según los criterios
+            array = list(alumnos)
+            print("Documentos antes del filtro por calificación:", list(alumnos))  # Imprimir los documentos antes del filtro
+            # Ordenar el array de alumnos por calificación de manera descendente
+            array = sorted(array, key=lambda alumno: int(alumno.get("calificacion", 0)))
+            # Puedes continuar trabajando con el array ordenado según la calificación
+            for alumno in array:
+                # Aquí puedes hacer lo que necesites con cada alumno, como agregarlos a una tabla
+                print(alumno["_id"], alumno["nombre"], alumno["calificacion"])
+            cursor = array
         else:
             cursor = coleccion.find(objetoBuscar)
 
@@ -47,6 +68,8 @@ def mostrarDatos(nombre="", sexo="", calificacion="", ordenamiento=""):
         print("Tiempo exedido ", errorTiempo)
     except pymongo.errors.ConnectionFailure as errorConexion:
         print("Fallo al conectarse a MongoDB ", errorConexion)
+
+
 
 # Función para crear un nuevo registro
 def crearRegistro():
@@ -71,6 +94,7 @@ def crearRegistro():
 def dobleClickTabla(event):
     global ID_ALUMNO
     ID_ALUMNO = str(tabla.item(tabla.selection())['text'])
+    print(ID_ALUMNO)
     alumnoSeleccionado = coleccion.find_one({"_id": ObjectId(ID_ALUMNO)})
     nombre.delete(0, tk.END)
     nombre.insert(tk.END, alumnoSeleccionado["nombre"])
@@ -125,17 +149,15 @@ def borrarAlumno():
 def buscarAlumno():
     mostrarDatos(buscarNombre.get(), buscarSexo.get(), buscarCalificacionAlumno.get())
 
-def filtrarNombresAscendente():
-    mostrarDatos(ordenamiento="A-Z")
-
-def filtrarNombresDescendente():
-    mostrarDatos(ordenamiento="Z-A")
 
 def filtrarCalificacionAscendente():
     mostrarDatos(ordenamiento="Calif ↑")
 
 def filtrarCalificacionDescendente():
     mostrarDatos(ordenamiento="Calif ↓")
+
+def filtrarAprobados():
+    mostrarDatos(ordenamiento="aprobados")
 
 # Crear ventana principal
 ventana = tk.Tk()
@@ -198,18 +220,17 @@ buscarCalificacionAlumno.grid(row=10, column=1, padx=10, pady=5, sticky="ew")
 buscar = tk.Button(ventana, text="Buscar alumno", command=buscarAlumno, bg="orange", fg="white")
 buscar.grid(row=11, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
 
-# Botones para filtrar por orden de nombres y calificación
-filtrarNombresAsc = tk.Button(ventana, text="A-Z", command=filtrarNombresAscendente)
-filtrarNombresAsc.grid(row=8, column=2, padx=5, pady=5, sticky="ew")
 
-filtrarNombresDesc = tk.Button(ventana, text="Z-A", command=filtrarNombresDescendente)
-filtrarNombresDesc.grid(row=8, column=3, padx=5, pady=5, sticky="ew")
 
 filtrarCalifAsc = tk.Button(ventana, text="Calif ↑", command=filtrarCalificacionAscendente)
 filtrarCalifAsc.grid(row=9, column=2, padx=5, pady=5, sticky="ew")
 
 filtrarCalifDesc = tk.Button(ventana, text="Calif ↓", command=filtrarCalificacionDescendente)
 filtrarCalifDesc.grid(row=9, column=3, padx=5, pady=5, sticky="ew")
+
+
+filtrarAprobados = tk.Button(ventana, text="Aprobados", command=filtrarAprobados)
+filtrarAprobados.grid(row=10, column=2, padx=5, pady=5, sticky="ew")
 
 # Configurar expansión de filas y columnas
 ventana.rowconfigure(1, weight=1)
